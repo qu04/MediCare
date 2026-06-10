@@ -128,7 +128,7 @@ public class MainController {
     @FXML
     private void showSettings() {
         lblStatus.setText("系统设置");
-        showPlaceholder("系统设置 - 开发中");
+        loadContent("/fxml/SettingsView.fxml");
     }
 
     @FXML
