@@ -22,8 +22,14 @@ public class MedicalRecordController {
     @RequireRole({"admin", "doctor"})
     public Result<List<MedicalRecordVO>> list(
             @RequestParam(required = false) Long patientId,
-            @RequestParam(required = false) Long doctorId) {
-        return Result.ok(medicalRecordService.findRecordVOList(patientId, doctorId));
+            @RequestParam(required = false) Long registrationId) {
+        return Result.ok(medicalRecordService.findRecordVOList(patientId, registrationId));
+    }
+
+    @GetMapping("/{id}")
+    @RequireRole({"admin", "doctor"})
+    public Result<MedicalRecordVO> detail(@PathVariable Long id) {
+        return Result.ok(medicalRecordService.findRecordVOById(id));
     }
 
     @GetMapping("/by-registration/{registrationId}")

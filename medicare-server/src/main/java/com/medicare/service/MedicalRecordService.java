@@ -15,12 +15,20 @@ public class MedicalRecordService {
 
     private final MedicalRecordRepository medicalRecordRepository;
 
-    public List<MedicalRecordVO> findRecordVOList(Long patientId, Long doctorId) {
-        return medicalRecordRepository.findRecordVOList(patientId, doctorId);
+    public List<MedicalRecordVO> findRecordVOList(Long patientId, Long registrationId) {
+        return medicalRecordRepository.findRecordVOList(patientId, registrationId);
     }
 
     public MedicalRecordVO findRecordVOByRegistrationId(Long registrationId) {
         MedicalRecordVO vo = medicalRecordRepository.findRecordVOByRegistrationId(registrationId);
+        if (vo == null) {
+            throw new BusinessException("病历不存在");
+        }
+        return vo;
+    }
+
+    public MedicalRecordVO findRecordVOById(Long id) {
+        MedicalRecordVO vo = medicalRecordRepository.findRecordVOById(id);
         if (vo == null) {
             throw new BusinessException("病历不存在");
         }
