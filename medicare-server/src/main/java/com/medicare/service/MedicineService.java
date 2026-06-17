@@ -80,6 +80,9 @@ public class MedicineService {
         log.setType(InventoryLog.TYPE_STOCK_IN);
         log.setQuantity(quantity);
         log.setBatchNo(batchNo);
+        if (expiryDate != null && !expiryDate.isBlank()) {
+            log.setExpiryDate(LocalDate.parse(expiryDate));
+        }
         log.setOperator(operator);
         log.setRemark(remark);
         inventoryLogRepository.save(log);
@@ -100,6 +103,9 @@ public class MedicineService {
         log.setType(InventoryLog.TYPE_STOCK_OUT);
         log.setQuantity(quantity);
         log.setBatchNo(batchNo);
+        if (expiryDate != null && !expiryDate.isBlank()) {
+            log.setExpiryDate(LocalDate.parse(expiryDate));
+        }
         log.setOperator(operator);
         log.setRemark(remark);
         inventoryLogRepository.save(log);
