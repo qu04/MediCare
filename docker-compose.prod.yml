@@ -1,0 +1,14 @@
+services:
+  mysql:
+    ports: []
+
+  backend:
+    ports: []
+    environment:
+      SPRING_JPA_SHOW_SQL: "false"
+      LOGGING_LEVEL_COM_MEDICARE: info
+      LOGGING_LEVEL_ORG_HIBERNATE_SQL: warn
+
+  frontend:
+    ports:
+      - "80:80"
