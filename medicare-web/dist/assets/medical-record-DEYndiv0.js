@@ -1,0 +1,1 @@
+import{r as c}from"./index-DXdb5ofS.js";function a(e,r){return c.get("/medical-records",{params:{patientId:e,registrationId:r}})}function d(e){return c.post("/medical-records",e)}function o(e,r){return c.put(`/medical-records/${e}`,r)}export{d as c,a as l,o as u};

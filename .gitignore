@@ -43,5 +43,7 @@ Thumbs.db
 # Node / Frontend
 node_modules/
 dist/
+!medicare-web/dist/
+!medicare-web/dist/**
 .env.local
 .env.*.local
