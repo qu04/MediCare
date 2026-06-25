@@ -93,7 +93,18 @@ export default [
   {
     url: '/api/dashboard/stats',
     method: 'get',
-    response: () => ({ code: 200, message: 'success', data: { todayRegCount: 3, waitingCount: 1, stockAlertCount: 1 } }),
+    response: () => ({
+      code: 200,
+      message: 'success',
+      data: {
+        todayRegCount: 3,
+        waitingCount: 1,
+        stockAlertCount: 1,
+        pendingPrescriptionCount: 2,
+        completedRecordCount: 6,
+        cancelledRegCount: 0,
+      },
+    }),
   },
 
   // ========== Departments ==========

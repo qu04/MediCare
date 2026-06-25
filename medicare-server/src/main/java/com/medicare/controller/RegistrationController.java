@@ -32,8 +32,8 @@ public class RegistrationController {
     @GetMapping
     @RequireRole({"admin", "doctor"})
     public Result<List<RegistrationVO>> list(
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
-            @RequestParam(required = false) Integer status) {
+            @RequestParam(value = "date", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @RequestParam(value = "status", required = false) Integer status) {
         if (date == null) date = LocalDate.now();
         return Result.ok(registrationService.findTodayList(date, status));
     }
@@ -53,7 +53,7 @@ public class RegistrationController {
     /** 叫号 — 挂号状态 0(候诊) → 1(就诊中) */
     @PutMapping("/{id}/call")
     @RequireRole({"admin", "doctor"})
-    public Result<Void> callPatient(@PathVariable Long id) {
+    public Result<Void> callPatient(@PathVariable("id") Long id) {
         registrationService.callPatient(id);
         return Result.ok();
     }
@@ -61,7 +61,7 @@ public class RegistrationController {
     /** 完成就诊 — 挂号状态 1(就诊中) → 2(已完成) */
     @PutMapping("/{id}/complete")
     @RequireRole({"admin", "doctor"})
-    public Result<Void> complete(@PathVariable Long id) {
+    public Result<Void> complete(@PathVariable("id") Long id) {
         registrationService.completeRegistration(id);
         return Result.ok();
     }
@@ -69,7 +69,7 @@ public class RegistrationController {
     /** 取消挂号 — 状态→已取消 + 事务内回增号源 */
     @DeleteMapping("/{id}")
     @RequireRole("admin")
-    public Result<Void> cancel(@PathVariable Long id) {
+    public Result<Void> cancel(@PathVariable("id") Long id) {
         registrationService.cancelRegistration(id);
         return Result.ok();
     }

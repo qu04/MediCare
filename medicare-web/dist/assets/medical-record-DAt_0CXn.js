@@ -1,0 +1,1 @@
+import{r}from"./index-G8kayDCA.js";function a(e,t){return r.get("/medical-records",{params:{patientId:e,registrationId:t}})}function i(e){return r.get(`/medical-records/by-registration/${e}`)}function o(e){return r.post("/medical-records",e)}function d(e,t){return r.put(`/medical-records/${e}`,t)}export{o as c,i as g,a as l,d as u};

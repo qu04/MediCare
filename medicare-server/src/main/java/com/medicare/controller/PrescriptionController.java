@@ -35,22 +35,22 @@ public class PrescriptionController {
     /** 处方列表查询（可按患者ID、是否今天筛选） */
     @GetMapping
     @RequireRole({"admin", "doctor", "pharmacist"})
-    public Result<List<PrescriptionListVO>> list(@RequestParam(required = false) Long patientId,
-                                            @RequestParam(required = false) Boolean today) {
+    public Result<List<PrescriptionListVO>> list(@RequestParam(value = "patientId", required = false) Long patientId,
+                                            @RequestParam(value = "today", required = false) Boolean today) {
         return Result.ok(prescriptionService.listPrescriptionVOs(patientId, today));
     }
 
     /** 处方详情 — 含明细项和关联的药品名称/规格/单位 */
     @GetMapping("/{id}")
     @RequireRole({"admin", "doctor", "pharmacist"})
-    public Result<PrescriptionVO> detail(@PathVariable Long id) {
+    public Result<PrescriptionVO> detail(@PathVariable("id") Long id) {
         return Result.ok(prescriptionService.findPrescriptionVOById(id));
     }
 
     /** 按病历ID查询处方（医生工作站：写完病历后查看对应处方） */
     @GetMapping("/by-record/{recordId}")
     @RequireRole({"admin", "doctor", "pharmacist"})
-    public Result<PrescriptionVO> byRecord(@PathVariable Long recordId) {
+    public Result<PrescriptionVO> byRecord(@PathVariable("recordId") Long recordId) {
         return Result.ok(prescriptionService.findByRecordId(recordId));
     }
 
@@ -83,7 +83,7 @@ public class PrescriptionController {
     /** 取药 — 药房确认发药，处方状态→已取药 */
     @PutMapping("/{id}/dispense")
     @RequireRole({"admin", "pharmacist"})
-    public Result<Void> dispense(@PathVariable Long id) {
+    public Result<Void> dispense(@PathVariable("id") Long id) {
         prescriptionService.dispense(id);
         return Result.ok();
     }
@@ -91,7 +91,7 @@ public class PrescriptionController {
     /** 作废处方 — 逐条回滚库存 + 记录日志 + 更新处方状态 */
     @PutMapping("/{id}/cancel")
     @RequireRole({"admin", "pharmacist"})
-    public Result<Void> cancel(@PathVariable Long id) {
+    public Result<Void> cancel(@PathVariable("id") Long id) {
         prescriptionService.cancelPrescription(id);
         return Result.ok();
     }
@@ -99,7 +99,7 @@ public class PrescriptionController {
     /** 库存变动日志查询（可按药品ID筛选） */
     @GetMapping("/inventory-logs")
     @RequireRole({"admin", "pharmacist"})
-    public Result<List<InventoryLogVO>> inventoryLogs(@RequestParam(required = false) Long medicineId) {
+    public Result<List<InventoryLogVO>> inventoryLogs(@RequestParam(value = "medicineId", required = false) Long medicineId) {
         return Result.ok(prescriptionService.findInventoryLogVOList(medicineId));
     }
 }

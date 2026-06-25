@@ -7,17 +7,15 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
-/**
- * 系统用户服务 — 用户 CRUD + 登录校验 + 密码管理
- * <p>
- * 密码策略：创建时 BCrypt 加密；登录时兼容明文和 BCrypt（迁移过渡期）；
- * 修改密码需验证旧密码
- */
 @Service
 @RequiredArgsConstructor
 public class SysUserService {
+
+    private static final int MAX_FAILED_ATTEMPTS = 5;
+    private static final int LOCK_MINUTES = 15;
 
     private final SysUserRepository sysUserRepository;
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
@@ -36,12 +34,13 @@ public class SysUserService {
                 .orElseThrow(() -> new BusinessException("用户名或密码错误"));
     }
 
-    /** 创建用户 — 密码 BCrypt 加密 + 用户名唯一性校验 */
     public SysUser create(SysUser user) {
         if (sysUserRepository.existsByUsername(user.getUsername())) {
             throw new BusinessException("用户名已存在");
         }
         user.setPassword(passwordEncoder.encode(user.getPassword()));
+        user.setFailedLoginAttempts(0);
+        user.setLockedUntil(null);
         return sysUserRepository.save(user);
     }
 
@@ -58,7 +57,6 @@ public class SysUserService {
         return sysUserRepository.save(existing);
     }
 
-    /** 删除用户 — 禁止删除超级管理员 admin */
     public void delete(Long id) {
         SysUser user = findById(id);
         if ("admin".equals(user.getUsername())) {
@@ -73,28 +71,55 @@ public class SysUserService {
             throw new BusinessException("旧密码不正确");
         }
         user.setPassword(passwordEncoder.encode(newPassword));
+        user.setFailedLoginAttempts(0);
+        user.setLockedUntil(null);
         sysUserRepository.save(user);
     }
 
-    /**
-     * 登录校验（兼容明文密码和 BCrypt 密码）
-     */
-    public SysUser login(String username, String rawPassword) {
-        SysUser user = findByUsername(username);
+    public SysUser login(String username, String rawPassword, String ipAddress) {
+        SysUser user = sysUserRepository.findByUsername(username)
+                .orElseThrow(() -> new BusinessException("用户名或密码错误"));
+
         if (user.getStatus() != 1) {
             throw new BusinessException("账号已被禁用");
         }
-        // 兼容明文密码和BCrypt密码
-        boolean match;
-        if (user.getPassword().startsWith("$2a$") || user.getPassword().startsWith("$2b$")) {
-            match = passwordEncoder.matches(rawPassword, user.getPassword());
-        } else {
-            // 明文密码兼容（迁移阶段）
-            match = rawPassword.equals(user.getPassword());
+
+        if (user.getLockedUntil() != null && user.getLockedUntil().isAfter(LocalDateTime.now())) {
+            throw new BusinessException("账号已被锁定，请在 " + user.getLockedUntil() + " 后重试");
         }
+
+        boolean match = matchesPassword(user.getPassword(), rawPassword);
         if (!match) {
-            throw new BusinessException("用户名或密码错误");
+            handleFailedLogin(user);
         }
-        return user;
+
+        user.setFailedLoginAttempts(0);
+        user.setLockedUntil(null);
+        user.setLastLoginTime(LocalDateTime.now());
+        user.setLastLoginIp(ipAddress);
+        return sysUserRepository.save(user);
+    }
+
+    private boolean matchesPassword(String storedPassword, String rawPassword) {
+        if (storedPassword.startsWith("$2a$") || storedPassword.startsWith("$2b$")) {
+            return passwordEncoder.matches(rawPassword, storedPassword);
+        }
+        return rawPassword.equals(storedPassword);
+    }
+
+    private void handleFailedLogin(SysUser user) {
+        int failed = user.getFailedLoginAttempts() == null ? 0 : user.getFailedLoginAttempts();
+        failed++;
+        user.setFailedLoginAttempts(failed);
+
+        if (failed >= MAX_FAILED_ATTEMPTS) {
+            user.setLockedUntil(LocalDateTime.now().plusMinutes(LOCK_MINUTES));
+            user.setFailedLoginAttempts(0);
+            sysUserRepository.save(user);
+            throw new BusinessException("连续登录失败次数过多，账号已锁定 15 分钟");
+        }
+
+        sysUserRepository.save(user);
+        throw new BusinessException("用户名或密码错误，已连续失败 " + failed + " 次");
     }
 }

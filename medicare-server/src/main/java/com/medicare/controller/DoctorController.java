@@ -26,13 +26,13 @@ public class DoctorController {
     /** 医生列表 — 可按科室ID筛选，返回含科室名的 VO */
     @GetMapping
     @RequireRole({"admin", "doctor"})
-    public Result<List<DoctorVO>> list(@RequestParam(required = false) Long deptId) {
+    public Result<List<DoctorVO>> list(@RequestParam(value = "deptId", required = false) Long deptId) {
         return Result.ok(doctorService.findDoctorVOList(deptId));
     }
 
     @GetMapping("/{id}")
     @RequireRole({"admin", "doctor"})
-    public Result<Doctor> detail(@PathVariable Long id) {
+    public Result<Doctor> detail(@PathVariable("id") Long id) {
         return Result.ok(doctorService.findById(id));
     }
 
@@ -44,13 +44,13 @@ public class DoctorController {
 
     @PutMapping("/{id}")
     @RequireRole("admin")
-    public Result<Doctor> update(@PathVariable Long id, @Valid @RequestBody Doctor doctor) {
+    public Result<Doctor> update(@PathVariable("id") Long id, @Valid @RequestBody Doctor doctor) {
         return Result.ok(doctorService.update(id, doctor));
     }
 
     @DeleteMapping("/{id}")
     @RequireRole("admin")
-    public Result<Void> delete(@PathVariable Long id) {
+    public Result<Void> delete(@PathVariable("id") Long id) {
         doctorService.delete(id);
         return Result.ok();
     }

@@ -3,7 +3,10 @@ package com.medicare.controller;
 import com.medicare.auth.AuthInterceptor;
 import com.medicare.dto.LoginRequest;
 import com.medicare.dto.Result;
+import com.medicare.entity.OperationLog;
 import com.medicare.entity.SysUser;
+import com.medicare.exception.BusinessException;
+import com.medicare.service.OperationLogService;
 import com.medicare.service.SysUserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
@@ -11,55 +14,64 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
-/**
- * 认证控制器 — 登录 / 登出 / 获取当前用户
- * <p>
- * 登录流程：前端提交账密 → SysUserService.login() 校验 → 成功后存入 HttpSession → 返回用户信息（密码置空）
- * 后续请求通过 AuthInterceptor 从 Session 取用户，未登录返回 401。
- * 角色权限由 @RequireRole + RoleCheckAspect 切面控制。
- */
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
 public class AuthController {
 
     private final SysUserService sysUserService;
+    private final OperationLogService operationLogService;
 
-    /**
-     * 登录 — 校验账密后写入 Session
-     * 密码兼容明文（迁移阶段）与 BCrypt 两种格式
-     */
     @PostMapping("/login")
     public Result<SysUser> login(@Valid @RequestBody LoginRequest request, HttpServletRequest httpRequest) {
-        SysUser user = sysUserService.login(request.getUsername(), request.getPassword());
-        // 密码清空，不返回给前端
-        user.setPassword(null);
-        // 存入 Session，后续 AuthInterceptor 据此判断登录状态
-        httpRequest.getSession(true).setAttribute(AuthInterceptor.CURRENT_USER_KEY, user);
-        return Result.ok(user);
+        try {
+            String ip = operationLogService.resolveClientIp(httpRequest);
+            SysUser user = sysUserService.login(request.getUsername(), request.getPassword(), ip);
+            SysUser safeUser = sanitize(user);
+            httpRequest.getSession(true).setAttribute(AuthInterceptor.CURRENT_USER_KEY, safeUser);
+            operationLogService.record("AUTH", "LOGIN", OperationLog.STATUS_SUCCESS,
+                    "用户登录成功", safeUser, httpRequest, "username=" + safeUser.getUsername());
+            return Result.ok(safeUser);
+        } catch (BusinessException ex) {
+            operationLogService.record("AUTH", "LOGIN", OperationLog.STATUS_FAILED,
+                    ex.getMessage(), null, httpRequest, "username=" + request.getUsername());
+            throw ex;
+        }
     }
 
-    /**
-     * 登出 — 销毁 Session
-     */
     @PostMapping("/logout")
     public Result<Void> logout(HttpServletRequest request) {
+        SysUser currentUser = AuthInterceptor.getCurrentUser(request);
         HttpSession session = request.getSession(false);
         if (session != null) {
             session.invalidate();
         }
+        operationLogService.record("AUTH", "LOGOUT", OperationLog.STATUS_SUCCESS,
+                "用户退出登录", currentUser, request, currentUser == null ? null : "username=" + currentUser.getUsername());
         return Result.ok();
     }
 
-    /**
-     * 获取当前登录用户信息（前端刷新页面后恢复登录态）
-     */
     @GetMapping("/current")
     public Result<SysUser> current(HttpServletRequest request) {
         SysUser user = AuthInterceptor.getCurrentUser(request);
-        if (user != null) {
-            user.setPassword(null);
-        }
-        return Result.ok(user);
+        return Result.ok(user == null ? null : sanitize(user));
+    }
+
+    private SysUser sanitize(SysUser user) {
+        SysUser copy = new SysUser();
+        copy.setId(user.getId());
+        copy.setUsername(user.getUsername());
+        copy.setPassword(null);
+        copy.setRealName(user.getRealName());
+        copy.setRole(user.getRole());
+        copy.setStatus(user.getStatus());
+        copy.setDoctorId(user.getDoctorId());
+        copy.setLastLoginTime(user.getLastLoginTime());
+        copy.setLastLoginIp(user.getLastLoginIp());
+        copy.setFailedLoginAttempts(user.getFailedLoginAttempts());
+        copy.setLockedUntil(user.getLockedUntil());
+        copy.setCreateTime(user.getCreateTime());
+        copy.setUpdateTime(user.getUpdateTime());
+        return copy;
     }
 }

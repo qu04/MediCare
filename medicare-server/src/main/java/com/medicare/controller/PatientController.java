@@ -32,13 +32,13 @@ public class PatientController {
     /** 模糊搜索 — 按姓名/身份证号/手机号匹配 */
     @GetMapping("/search")
     @RequireRole({"admin", "doctor"})
-    public Result<List<Patient>> search(@RequestParam String keyword) {
+    public Result<List<Patient>> search(@RequestParam("keyword") String keyword) {
         return Result.ok(patientService.search(keyword));
     }
 
     @GetMapping("/{id}")
     @RequireRole({"admin", "doctor"})
-    public Result<Patient> detail(@PathVariable Long id) {
+    public Result<Patient> detail(@PathVariable("id") Long id) {
         return Result.ok(patientService.findById(id));
     }
 
@@ -52,13 +52,13 @@ public class PatientController {
     /** 更新患者 — 身份证号唯一性校验（排除自身） */
     @PutMapping("/{id}")
     @RequireRole({"admin", "doctor"})
-    public Result<Patient> update(@PathVariable Long id, @Valid @RequestBody Patient patient) {
+    public Result<Patient> update(@PathVariable("id") Long id, @Valid @RequestBody Patient patient) {
         return Result.ok(patientService.update(id, patient));
     }
 
     @DeleteMapping("/{id}")
     @RequireRole("admin")
-    public Result<Void> delete(@PathVariable Long id) {
+    public Result<Void> delete(@PathVariable("id") Long id) {
         patientService.delete(id);
         return Result.ok();
     }

@@ -1,0 +1,1 @@
+import{r as s}from"./index-G8kayDCA.js";function l(e,u){return s.get("/schedules",{params:{date:e,deptId:u}})}function r(e,u){return s.get("/schedules/available",{params:{date:e,deptId:u}})}function a(e){return s.post("/schedules",e)}function c(e,u){return s.put(`/schedules/${e}`,u)}function n(e){return s.delete(`/schedules/${e}`)}export{a as c,n as d,r as g,l,c as u};

@@ -14,6 +14,10 @@ export interface SysUser {
   role: 'admin' | 'doctor' | 'pharmacist'
   status: number
   doctorId?: number | null
+  lastLoginTime?: string | null
+  lastLoginIp?: string | null
+  failedLoginAttempts?: number
+  lockedUntil?: string | null
   createTime?: string
   updateTime?: string
 }
@@ -180,6 +184,35 @@ export interface DashboardStats {
   todayRegCount: number
   waitingCount: number
   stockAlertCount: number
+  pendingPrescriptionCount: number
+  completedRecordCount: number
+  cancelledRegCount: number
+}
+
+export interface OperationLog {
+  id: number
+  module: string
+  action: string
+  bizType?: string | null
+  bizId?: number | null
+  operatorId?: number | null
+  operatorName?: string | null
+  operatorRole?: string | null
+  requestMethod?: string | null
+  requestUri?: string | null
+  ipAddress?: string | null
+  status: number
+  message?: string | null
+  detail?: string | null
+  createTime?: string
+}
+
+export interface SecurityOverview {
+  totalUsers: number
+  activeUsers: number
+  lockedUsers: number
+  recentFailedLogins: number
+  totalOperationLogs: number
 }
 
 // ========== 请求参数 ==========

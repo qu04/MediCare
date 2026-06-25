@@ -1,5 +1,5 @@
 import request from './index'
-import type { Result, SysUser } from '../types'
+import type { DashboardStats, Result, SysUser } from '../types'
 
 export function listUsers() {
   return request.get<any, Result<SysUser[]>>('/users')
@@ -22,5 +22,5 @@ export function updatePassword(id: number, data: { oldPassword: string; newPassw
 }
 
 export function getDashboardStats() {
-  return request.get<any, Result<{ todayRegCount: number; waitingCount: number; stockAlertCount: number }>>('/dashboard/stats')
+  return request.get<any, Result<DashboardStats>>('/dashboard/stats')
 }

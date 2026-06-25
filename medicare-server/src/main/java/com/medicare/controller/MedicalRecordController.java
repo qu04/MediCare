@@ -28,22 +28,22 @@ public class MedicalRecordController {
     @GetMapping
     @RequireRole({"admin", "doctor"})
     public Result<List<MedicalRecordVO>> list(
-            @RequestParam(required = false) Long patientId,
-            @RequestParam(required = false) Long registrationId) {
+            @RequestParam(value = "patientId", required = false) Long patientId,
+            @RequestParam(value = "registrationId", required = false) Long registrationId) {
         return Result.ok(medicalRecordService.findRecordVOList(patientId, registrationId));
     }
 
     /** 病历详情（按ID查询，返回含关联名称的 VO） */
     @GetMapping("/{id}")
     @RequireRole({"admin", "doctor"})
-    public Result<MedicalRecordVO> detail(@PathVariable Long id) {
+    public Result<MedicalRecordVO> detail(@PathVariable("id") Long id) {
         return Result.ok(medicalRecordService.findRecordVOById(id));
     }
 
     /** 按挂号ID查询病历（医生工作站：叫号后查看该挂号的病历） */
     @GetMapping("/by-registration/{registrationId}")
     @RequireRole({"admin", "doctor"})
-    public Result<MedicalRecordVO> getByRegistration(@PathVariable Long registrationId) {
+    public Result<MedicalRecordVO> getByRegistration(@PathVariable("registrationId") Long registrationId) {
         return Result.ok(medicalRecordService.findRecordVOByRegistrationId(registrationId));
     }
 
@@ -57,7 +57,7 @@ public class MedicalRecordController {
     /** 更新病历 — 仅允许修改主诉、现病史、既往史、体格检查、诊断、医嘱 */
     @PutMapping("/{id}")
     @RequireRole({"admin", "doctor"})
-    public Result<MedicalRecord> update(@PathVariable Long id, @Valid @RequestBody MedicalRecord record) {
+    public Result<MedicalRecord> update(@PathVariable("id") Long id, @Valid @RequestBody MedicalRecord record) {
         return Result.ok(medicalRecordService.update(id, record));
     }
 }

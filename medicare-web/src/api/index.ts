@@ -21,9 +21,13 @@ request.interceptors.response.use(
     return res
   },
   (error) => {
+    const isSilentAuthProbe = error.config?.url?.includes('/auth/current')
+
     if (error.response?.status === 401) {
       router.push('/login')
-      ElMessage.error('登录已过期，请重新登录')
+      if (!isSilentAuthProbe) {
+        ElMessage.error('登录已过期，请重新登录')
+      }
     } else {
       ElMessage.error(error.response?.data?.message || '网络错误')
     }

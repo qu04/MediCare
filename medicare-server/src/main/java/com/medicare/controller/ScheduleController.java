@@ -30,8 +30,8 @@ public class ScheduleController {
     @GetMapping
     @RequireRole({"admin", "doctor"})
     public Result<List<ScheduleVO>> list(
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
-            @RequestParam(required = false) Long deptId) {
+            @RequestParam(value = "date", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @RequestParam(value = "deptId", required = false) Long deptId) {
         return Result.ok(scheduleService.findScheduleVOList(date, deptId));
     }
 
@@ -39,14 +39,14 @@ public class ScheduleController {
     @GetMapping("/available")
     @RequireRole({"admin", "doctor"})
     public Result<List<ScheduleVO>> available(
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
-            @RequestParam(required = false) Long deptId) {
+            @RequestParam(value = "date", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @RequestParam(value = "deptId", required = false) Long deptId) {
         return Result.ok(scheduleService.findAvailableSchedules(date, deptId));
     }
 
     @GetMapping("/{id}")
     @RequireRole({"admin", "doctor"})
-    public Result<Schedule> detail(@PathVariable Long id) {
+    public Result<Schedule> detail(@PathVariable("id") Long id) {
         return Result.ok(scheduleService.findById(id));
     }
 
@@ -59,13 +59,13 @@ public class ScheduleController {
 
     @PutMapping("/{id}")
     @RequireRole("admin")
-    public Result<Schedule> update(@PathVariable Long id, @Valid @RequestBody Schedule schedule) {
+    public Result<Schedule> update(@PathVariable("id") Long id, @Valid @RequestBody Schedule schedule) {
         return Result.ok(scheduleService.update(id, schedule));
     }
 
     @DeleteMapping("/{id}")
     @RequireRole("admin")
-    public Result<Void> delete(@PathVariable Long id) {
+    public Result<Void> delete(@PathVariable("id") Long id) {
         scheduleService.delete(id);
         return Result.ok();
     }

@@ -38,6 +38,18 @@ public class SysUser {
     @Column(name = "doctor_id")
     private Long doctorId;
 
+    @Column(name = "last_login_time")
+    private LocalDateTime lastLoginTime;
+
+    @Column(name = "last_login_ip", length = 64)
+    private String lastLoginIp;
+
+    @Column(name = "failed_login_attempts")
+    private Integer failedLoginAttempts = 0;
+
+    @Column(name = "locked_until")
+    private LocalDateTime lockedUntil;
+
     @Column(name = "create_time", updatable = false, insertable = false)
     private LocalDateTime createTime;
 

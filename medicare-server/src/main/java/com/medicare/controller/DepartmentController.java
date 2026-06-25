@@ -30,7 +30,7 @@ public class DepartmentController {
 
     @GetMapping("/{id}")
     @RequireRole({"admin", "doctor"})
-    public Result<Department> detail(@PathVariable Long id) {
+    public Result<Department> detail(@PathVariable("id") Long id) {
         return Result.ok(departmentService.findById(id));
     }
 
@@ -42,13 +42,13 @@ public class DepartmentController {
 
     @PutMapping("/{id}")
     @RequireRole("admin")
-    public Result<Department> update(@PathVariable Long id, @Valid @RequestBody Department department) {
+    public Result<Department> update(@PathVariable("id") Long id, @Valid @RequestBody Department department) {
         return Result.ok(departmentService.update(id, department));
     }
 
     @DeleteMapping("/{id}")
     @RequireRole("admin")
-    public Result<Void> delete(@PathVariable Long id) {
+    public Result<Void> delete(@PathVariable("id") Long id) {
         departmentService.delete(id);
         return Result.ok();
     }

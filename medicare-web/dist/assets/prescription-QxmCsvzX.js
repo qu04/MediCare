@@ -1,0 +1,1 @@
+import{r as e}from"./index-G8kayDCA.js";function n(r,t){return e.get("/prescriptions",{params:{patientId:r,today:t}})}function i(r){return e.get(`/prescriptions/by-record/${r}`)}function c(r){return e.post("/prescriptions",r)}function p(r){return e.put(`/prescriptions/${r}/dispense`)}function o(r){return e.put(`/prescriptions/${r}/cancel`)}export{o as a,c,p as d,i as g,n as l};

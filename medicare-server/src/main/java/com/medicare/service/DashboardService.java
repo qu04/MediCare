@@ -1,7 +1,9 @@
 package com.medicare.service;
 
 import com.medicare.dto.DashboardStats;
+import com.medicare.repository.MedicalRecordRepository;
 import com.medicare.repository.MedicineRepository;
+import com.medicare.repository.PrescriptionRepository;
 import com.medicare.repository.RegistrationRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -17,6 +19,8 @@ public class DashboardService {
 
     private final RegistrationRepository registrationRepository;
     private final MedicineRepository medicineRepository;
+    private final PrescriptionRepository prescriptionRepository;
+    private final MedicalRecordRepository medicalRecordRepository;
 
     /**
      * 聚合统计：今日挂号数 + 候诊数 + 库存预警数
@@ -30,6 +34,14 @@ public class DashboardService {
         stats.setWaitingCount(registrationRepository.findTodayList(LocalDate.now(), 0).size());
         // 库存预警数
         stats.setStockAlertCount(medicineRepository.findLowStockMedicines().size());
+        // 待处理处方数（待缴费 + 已缴费未发药）
+        stats.setPendingPrescriptionCount(
+                prescriptionRepository.findByStatus(0).size() + prescriptionRepository.findByStatus(1).size()
+        );
+        // 病历沉淀总量
+        stats.setCompletedRecordCount(medicalRecordRepository.count());
+        // 今日取消挂号数
+        stats.setCancelledRegCount(registrationRepository.findTodayList(LocalDate.now(), 3).size());
         return stats;
     }
 }

@@ -1,1 +1,0 @@
-import{r as e}from"./index-DXdb5ofS.js";function a(){return e.get("/departments")}function p(t){return e.post("/departments",t)}function s(t,r){return e.put(`/departments/${t}`,r)}function u(t){return e.delete(`/departments/${t}`)}export{p as c,u as d,a as l,s as u};

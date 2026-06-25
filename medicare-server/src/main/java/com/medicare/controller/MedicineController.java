@@ -26,7 +26,7 @@ public class MedicineController {
     /** 药品列表（支持关键词模糊搜索，无关键词时返回全部启用状态药品） */
     @GetMapping
     @RequireRole({"admin", "doctor", "pharmacist"})
-    public Result<List<Medicine>> list(@RequestParam(required = false) String keyword) {
+    public Result<List<Medicine>> list(@RequestParam(value = "keyword", required = false) String keyword) {
         if (keyword != null && !keyword.isBlank()) {
             return Result.ok(medicineService.search(keyword));
         }
@@ -42,7 +42,7 @@ public class MedicineController {
 
     @GetMapping("/{id}")
     @RequireRole({"admin", "doctor", "pharmacist"})
-    public Result<Medicine> detail(@PathVariable Long id) {
+    public Result<Medicine> detail(@PathVariable("id") Long id) {
         return Result.ok(medicineService.findById(id));
     }
 
@@ -54,13 +54,13 @@ public class MedicineController {
 
     @PutMapping("/{id}")
     @RequireRole({"admin", "pharmacist"})
-    public Result<Medicine> update(@PathVariable Long id, @Valid @RequestBody Medicine medicine) {
+    public Result<Medicine> update(@PathVariable("id") Long id, @Valid @RequestBody Medicine medicine) {
         return Result.ok(medicineService.update(id, medicine));
     }
 
     @DeleteMapping("/{id}")
     @RequireRole("admin")
-    public Result<Void> delete(@PathVariable Long id) {
+    public Result<Void> delete(@PathVariable("id") Long id) {
         medicineService.delete(id);
         return Result.ok();
     }
@@ -68,7 +68,7 @@ public class MedicineController {
     /** 入库 — 增加库存 + 记录日志（含批次号、有效期） */
     @PostMapping("/{id}/stock-in")
     @RequireRole({"admin", "pharmacist"})
-    public Result<Void> stockIn(@PathVariable Long id, @Valid @RequestBody StockRequest request) {
+    public Result<Void> stockIn(@PathVariable("id") Long id, @Valid @RequestBody StockRequest request) {
         medicineService.stockIn(id, request.getQuantity(), request.getBatchNo(),
                 request.getExpiryDate(), request.getOperator(), request.getRemark());
         return Result.ok();
@@ -77,7 +77,7 @@ public class MedicineController {
     /** 出库 — 安全扣减库存（防超卖）+ 记录日志 */
     @PostMapping("/{id}/stock-out")
     @RequireRole({"admin", "pharmacist"})
-    public Result<Void> stockOut(@PathVariable Long id, @Valid @RequestBody StockRequest request) {
+    public Result<Void> stockOut(@PathVariable("id") Long id, @Valid @RequestBody StockRequest request) {
         medicineService.stockOut(id, request.getQuantity(), request.getBatchNo(),
                 request.getExpiryDate(), request.getOperator(), request.getRemark());
         return Result.ok();

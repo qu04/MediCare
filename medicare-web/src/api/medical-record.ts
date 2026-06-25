@@ -9,6 +9,10 @@ export function getMedicalRecord(id: number) {
   return request.get<any, Result<MedicalRecord>>(`/medical-records/${id}`)
 }
 
+export function getMedicalRecordByRegistration(registrationId: number) {
+  return request.get<any, Result<MedicalRecord>>(`/medical-records/by-registration/${registrationId}`)
+}
+
 export function createMedicalRecord(data: MedicalRecord) {
   return request.post<any, Result<MedicalRecord>>('/medical-records', data)
 }
