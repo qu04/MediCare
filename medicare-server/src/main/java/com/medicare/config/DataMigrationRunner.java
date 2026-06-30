@@ -24,6 +24,7 @@ public class DataMigrationRunner implements CommandLineRunner {
     public void run(String... args) {
         ensureCommercialSchema();
         migrateLegacyPasswords();
+        ensureDemoAccounts();
     }
 
     private void migrateLegacyPasswords() {
@@ -34,62 +35,102 @@ public class DataMigrationRunner implements CommandLineRunner {
                 user.setPassword(passwordEncoder.encode(user.getPassword()));
                 sysUserRepository.save(user);
                 migrated++;
-                log.info("迁移用户密码到 BCrypt: {}", user.getUsername());
+                log.info("Migrated password to BCrypt for user: {}", user.getUsername());
             }
         }
         if (migrated > 0) {
-            log.info("密码迁移完成，共迁移 {} 个用户", migrated);
+            log.info("Password migration completed. Total migrated users: {}", migrated);
         } else {
-            log.info("所有用户密码已是 BCrypt 格式，无需迁移");
+            log.info("All user passwords already use BCrypt.");
         }
     }
 
     private void ensureCommercialSchema() {
-        addColumnIfMissing("sys_user", "last_login_time",
-                "ALTER TABLE sys_user ADD COLUMN last_login_time DATETIME NULL COMMENT '最后登录时间'");
-        addColumnIfMissing("sys_user", "last_login_ip",
-                "ALTER TABLE sys_user ADD COLUMN last_login_ip VARCHAR(64) NULL COMMENT '最后登录IP'");
-        addColumnIfMissing("sys_user", "failed_login_attempts",
-                "ALTER TABLE sys_user ADD COLUMN failed_login_attempts INT NOT NULL DEFAULT 0 COMMENT '连续登录失败次数'");
-        addColumnIfMissing("sys_user", "locked_until",
-                "ALTER TABLE sys_user ADD COLUMN locked_until DATETIME NULL COMMENT '锁定截止时间'");
+        addColumnIfMissing(
+                "sys_user",
+                "last_login_time",
+                "ALTER TABLE sys_user ADD COLUMN last_login_time DATETIME NULL COMMENT 'last login time'"
+        );
+        addColumnIfMissing(
+                "sys_user",
+                "last_login_ip",
+                "ALTER TABLE sys_user ADD COLUMN last_login_ip VARCHAR(64) NULL COMMENT 'last login ip'"
+        );
+        addColumnIfMissing(
+                "sys_user",
+                "failed_login_attempts",
+                "ALTER TABLE sys_user ADD COLUMN failed_login_attempts INT NOT NULL DEFAULT 0 COMMENT 'failed login attempts'"
+        );
+        addColumnIfMissing(
+                "sys_user",
+                "locked_until",
+                "ALTER TABLE sys_user ADD COLUMN locked_until DATETIME NULL COMMENT 'locked until'"
+        );
 
         jdbcTemplate.execute("""
                 CREATE TABLE IF NOT EXISTS operation_log (
-                  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '日志ID',
-                  module VARCHAR(50) NOT NULL COMMENT '模块',
-                  action VARCHAR(50) NOT NULL COMMENT '动作',
-                  biz_type VARCHAR(50) NULL COMMENT '业务类型',
-                  biz_id BIGINT UNSIGNED NULL COMMENT '业务ID',
-                  operator_id BIGINT UNSIGNED NULL COMMENT '操作人ID',
-                  operator_name VARCHAR(50) NULL COMMENT '操作人姓名',
-                  operator_role VARCHAR(20) NULL COMMENT '操作人角色',
-                  request_method VARCHAR(10) NULL COMMENT '请求方法',
-                  request_uri VARCHAR(200) NULL COMMENT '请求路径',
-                  ip_address VARCHAR(64) NULL COMMENT 'IP地址',
-                  status TINYINT NOT NULL DEFAULT 1 COMMENT '状态：1成功 0失败',
-                  message VARCHAR(500) NULL COMMENT '摘要',
-                  detail VARCHAR(1000) NULL COMMENT '详情',
-                  create_time DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间',
+                  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT COMMENT 'log id',
+                  module VARCHAR(50) NOT NULL COMMENT 'module',
+                  action VARCHAR(50) NOT NULL COMMENT 'action',
+                  biz_type VARCHAR(50) NULL COMMENT 'business type',
+                  biz_id BIGINT UNSIGNED NULL COMMENT 'business id',
+                  operator_id BIGINT UNSIGNED NULL COMMENT 'operator id',
+                  operator_name VARCHAR(50) NULL COMMENT 'operator name',
+                  operator_role VARCHAR(20) NULL COMMENT 'operator role',
+                  request_method VARCHAR(10) NULL COMMENT 'request method',
+                  request_uri VARCHAR(200) NULL COMMENT 'request uri',
+                  ip_address VARCHAR(64) NULL COMMENT 'ip address',
+                  status TINYINT NOT NULL DEFAULT 1 COMMENT '1 success 0 failed',
+                  message VARCHAR(500) NULL COMMENT 'message',
+                  detail VARCHAR(1000) NULL COMMENT 'detail',
+                  create_time DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT 'create time',
                   PRIMARY KEY (id),
                   KEY idx_operation_log_module_time (module, create_time),
                   KEY idx_operation_log_operator_time (operator_id, create_time),
                   KEY idx_operation_log_status_time (status, create_time)
-                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='操作审计日志表'
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='operation log'
                 """);
     }
 
+    private void ensureDemoAccounts() {
+        ensureUser("admin", "12345", "系统管理员", "admin", null);
+        ensureUser("doctor1", "12345", "门诊医生", "doctor", 1L);
+        ensureUser("pharmacist1", "12345", "药剂师", "pharmacist", null);
+    }
+
+    private void ensureUser(String username, String password, String realName, String role, Long doctorId) {
+        if (sysUserRepository.existsByUsername(username)) {
+            return;
+        }
+        SysUser user = new SysUser();
+        user.setUsername(username);
+        user.setPassword(passwordEncoder.encode(password));
+        user.setRealName(realName);
+        user.setRole(role);
+        user.setStatus(1);
+        user.setDoctorId(doctorId);
+        user.setFailedLoginAttempts(0);
+        user.setLockedUntil(null);
+        sysUserRepository.save(user);
+        log.info("Created demo account: {}", username);
+    }
+
     private void addColumnIfMissing(String tableName, String columnName, String ddl) {
-        Integer count = jdbcTemplate.queryForObject("""
+        Integer count = jdbcTemplate.queryForObject(
+                """
                 SELECT COUNT(*)
                 FROM information_schema.columns
                 WHERE table_schema = DATABASE()
                   AND table_name = ?
                   AND column_name = ?
-                """, Integer.class, tableName, columnName);
+                """,
+                Integer.class,
+                tableName,
+                columnName
+        );
         if (count != null && count == 0) {
             jdbcTemplate.execute(ddl);
-            log.info("已补齐字段 {}.{}", tableName, columnName);
+            log.info("Added missing column {}.{}", tableName, columnName);
         }
     }
 }
